@@ -1,0 +1,53 @@
+/* CSS styles for detailed test case report */
+table, th, td {
+    border-collapse: collapse;
+    padding: 5px;
+    border: 1px solid black;
+}
+
+th {
+    background-color: lightyellow;
+}
+
+h3 {
+    color: grey;
+}
+
+.failed-step {
+    color: red;
+}
+
+
+.passed-step {
+    color: black;
+}
+
+.passed-assertion {
+    color: black;
+}
+
+/* Status column styles */
+.status-pass {
+    color: green;
+    font-weight: bold;
+}
+
+.status-fail {
+    color: red;
+    font-weight: bold;
+}
+
+.clickable-error {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.stack-trace {
+    display: none;
+    background-color: #f0f0f0;
+    padding: 5px;
+    margin-top: 5px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    font-size: 12px;
+}

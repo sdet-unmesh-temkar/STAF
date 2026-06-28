@@ -1,0 +1,49 @@
+#This workflow is used to fetch STAF version for the repositories that are in VFDE-Solstice-TestAutomation organisation and publish a report
+name: STAF Repository Version Overview
+on:
+  schedule:
+    - cron: '0 6 * * 2'
+
+  workflow_dispatch:
+
+jobs:
+  STAF-Repository-Version-Overview:
+    runs-on:
+      group: cicdhub-runners
+      labels: self-hosted-amd64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch STAF Version from repositories
+        id: fetchStafVersion
+        uses: VFDE-Solstice-TestAutomation/staf-actions/fetch-STAF-Version@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          confluence-username: ${{ secrets.CONFLUENCE_USERNAME }}
+          confluence-password: ${{ secrets.CONFLUENCE_PASSWORD }}
+
+      - name: Upload Files
+        uses: actions/upload-artifact@v3
+        with:
+          name: Repository Overview
+          path: |
+            repositoryData.html
+          retention-days: 5
+
+#      - name: Get Current Date
+#        id: fetch-date
+#        run: |
+#          echo "CURRENT_DATE=$(date +"%d.%m.%Y")" >> $GITHUB_ENV
+
+#      - name: Email Trigger
+#        uses: VFDE-Solstice-Systemintegration/action-send-email@v5
+#        with:
+#          from-email: 'noreply-github@vodafone.com'
+#          to-email: 'spartan@vodafone.com'
+#          subject: 'STAF Repository Version Overview: ${{ env.CURRENT_DATE }}'
+#          body: '${{ steps.fetchStafVersion.outputs.stafVersion }}'
+#          email-format: 'html'

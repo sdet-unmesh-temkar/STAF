@@ -1,0 +1,50 @@
+/* CSS styles for summary report */
+table, th, td {
+    border-collapse: collapse;
+    padding: 5px;
+}
+
+.outer-table td {
+    border: none;
+}
+
+.outer-table th {
+    font-size: 20px;
+    color: grey;
+}
+
+.inner-table th {
+    font-size: 15px;
+    color: black;
+    background-color: lightyellow;
+}
+
+.inner-table, .inner-table th, .inner-table td {
+    border: 1px solid black;
+    font-size: 15px;
+}
+
+h3 {
+    color: grey;
+}
+
+.status-header {
+    text-align: left;
+    width: 100px;
+}
+
+.count-header {
+    width: 100px;
+}
+
+.percentage-header {
+    width: 100px;
+}
+
+.status-cell {
+    text-align: left;
+}
+
+.total-row {
+    font-weight: bold;
+}

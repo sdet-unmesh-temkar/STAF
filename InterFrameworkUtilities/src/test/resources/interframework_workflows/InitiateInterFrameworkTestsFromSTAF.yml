@@ -1,0 +1,122 @@
+name: Initiate interframework tests from STAF
+
+on:
+  workflow_dispatch:
+
+    inputs:
+      testTag:
+        description: 'The Cucumber Test Tag(s) which will be executed. Cucumber supports logical expressions with "and","or" and "not".'
+        type: string
+        required: true
+        default: "@testCaseInitiationTemplate"
+
+      stage:
+        description: 'The name of the stage on which the Test(s) will be executed.'
+        required: true
+        type: choice
+        options:
+          - 'DEV'
+          - 'E2E'
+          - 'TEST'
+          - 'SANDBOX'
+
+      executionProfile:
+        description: 'The parallelization execution profile.'
+        required: false
+        default: 'Sequential'
+        type: choice
+        options:
+          - 'Sequential'
+          - 'Features Parallel'
+          - 'Scenarios Parallel'
+          - 'Multi Forking'
+
+      threadCount:
+        description: 'The number of maximum threads for parallel test execution. Defaults to 1 if not specified.'
+        required: false
+        type: string
+        default: '1'
+
+jobs:
+  test_execution_job:
+    runs-on:
+      group: STAF-TEST
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: STAF runner set up
+        uses: VFDE-Solstice-TestAutomation/staf-actions/runner-setup-action@main
+        with:
+          chrome-install: 'false'
+          nexus-certificate: ${{ vars.NEXUS_CERTIFICATE }}
+          servers: |
+            [{
+              "id": "STAF_repo",
+              "username": "${{ secrets.STAF_REPO_USERNAME }}",
+              "password": "${{ secrets.STAF_REPO_PASSWORD }}"
+            },
+            {
+              "id": "TESTAUTO_SOLSTICE_MAVEN2",
+              "username": "${{ secrets.NEXUS_REPO_USERNAME }}",
+              "password": "${{ secrets.NEXUS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "amdocs_repo",
+              "username": "${{ secrets.AMDOCS_REPO_USERNAME }}",
+              "password": "${{ secrets.AMDOCS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "public_repo",
+              "username": "${{ secrets.PUBLIC_REPO_USERNAME }}",
+              "password": "${{ secrets.PUBLIC_REPO_PASSWORD }}"
+            }]
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository/*/*
+            !~/.m2/repository/STAF/$<Artifact_ID>
+          key: ${{ runner.os }}-maven-
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Test Steps
+        id: runTest
+        uses: VFDE-Solstice-TestAutomation/staf-actions/run-test-action@main
+        with:
+          testTag : ${{ inputs.testTag }}
+          stage: ${{ inputs.stage }}
+          executionProfile: ${{ inputs.executionProfile }}
+          threadCount: ${{ inputs.threadCount }}
+          vault_RoleID: ${{ secrets.VAULT_ROLEID }}
+          vault_SecretID: ${{ secrets.VAULT_SECRETID }}
+
+      - name: Email Trigger
+        if: ${{ inputs.emailID != '' && ( success() || failure() ) }}
+        uses: VFDE-Solstice-Systemintegration/action-send-email@v5
+        with:
+          from-email: 'noreply-github@vodafone.com'
+          to-email: '${{ inputs.emailID }}'
+          subject: '${{ github.repository }}: ${{github.workflow}} - ${{ github.run_id }}'
+          body: |
+            <b>Environment Name:</b> ${{inputs.stage}}<br>
+            <b>TestTag:</b> ${{ inputs.testTag }}<br>
+            <b>Test Execution Time:</b> ${{ steps.runTest.outputs.testExecutionTime }} <br>
+            <b>Build URL:</b> ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} <br>
+            <b>Xray Test Execution:</b> https://de.jira.agile.vodafone.com/browse/${{steps.xray.outputs.testExecKey}} <br>
+            <html>
+               <body>
+                  <table>
+                     <td style=border: none;>${{ steps.runTest.outputs.interframeworkSummary }}</td>
+                     <td style=\"border: none;\"><img src='cid:pieChart.jpeg' align=\"left\"></td>
+                  </table>
+               </body>
+            </html>
+            ${{ steps.runTest.outputs.interframeworkTestCaseDetails }}
+          email-format: 'html'
+          attachments: target/reportFiles/pieChart.jpeg

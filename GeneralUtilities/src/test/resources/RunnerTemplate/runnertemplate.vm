@@ -1,0 +1,42 @@
+#parse("/array.java.vm")
+#if ($packageName)
+package $packageName;
+
+#end##
+import java.io.FileWriter;
+import java.io.IOException;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+
+import io.cucumber.junit.Cucumber;
+import io.cucumber.junit.CucumberOptions;
+
+
+@RunWith(Cucumber.class)
+@CucumberOptions(
+        features = {"$featureFile"},
+        tags="$tags.get(0)",
+        glue = #stringArray($glue),
+        plugin = #stringArray($plugins),
+        monochrome = true,
+        stepNotifications=true
+        )
+
+
+public class $className {
+
+@BeforeClass
+    public static void beforeclass(){
+        if(System.getProperty("env")==null)
+            System.setProperty("env","E2E");
+        System.out.println("env:     from template before class " + System.getProperty("env"));
+
+    }
+
+    @AfterClass
+    public static void writeExtentReport() {
+        System.out.println("env:     from template after class " + System.getProperty("env"));
+    }
+}

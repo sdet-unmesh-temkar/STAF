@@ -1,0 +1,73 @@
+#This CI workflow is used to merge pull request from feature branch to main branch.
+#Checks to be performed: compilation , sonarqube analysis
+
+name: CI-main
+run-name: merge PR from '${{github.event.pull_request.head.ref}}' to 'main' branch
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  CI-JOB-main:
+    runs-on:
+      group: cicdhub-runners
+      labels: self-hosted-standard
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: STAF runner set up
+        uses: VFDE-Solstice-TestAutomation/staf-actions/runner-setup-action@main
+        with:
+          nexus-certificate: ${{ vars.NEXUS_CERTIFICATE }}
+          servers: |
+            [{
+              "id": "STAF_repo",
+              "username": "${{ secrets.STAF_REPO_USERNAME }}",
+              "password": "${{ secrets.STAF_REPO_PASSWORD }}"
+            },
+            {
+              "id": "TESTAUTO_SOLSTICE_MAVEN2",
+              "username": "${{ secrets.NEXUS_REPO_USERNAME }}",
+              "password": "${{ secrets.NEXUS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "amdocs_repo",
+              "username": "${{ secrets.AMDOCS_REPO_USERNAME }}",
+              "password": "${{ secrets.AMDOCS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "public_repo",
+              "username": "${{ secrets.PUBLIC_REPO_USERNAME }}",
+              "password": "${{ secrets.PUBLIC_REPO_PASSWORD }}"
+            }]
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository/*/*
+            !~/.m2/repository/STAF/STAF
+          key: ${{ runner.os }}-maven-
+          restore-keys: |
+            ${{ runner.os }}-maven-
+          
+      - name: Sonarqube analysis
+        uses: VFDE-Solstice-TestAutomation/staf-actions/sonarqube-scan-action@main
+        with:
+          sonarHostUrl: ${{ vars.SONAR_HOST_URL }}
+          sonarToken: ${{ secrets.SONAR_TOKEN }}
+          projectKey: ${{ vars.PROJECT_KEY }}
+          projectName: ${{ vars.PROJECT_NAME }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.number }}
+
+      - name: Approve pull pequest
+        uses: VFDE-Solstice-TestAutomation/staf-actions/approve-pull-request-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.number }}

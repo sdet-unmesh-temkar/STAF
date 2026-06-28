@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>STAF</groupId>
+		<artifactId>STAF</artifactId>
+		<version>10.3.1</version>
+	</parent>
+	<artifactId>APIUtilities</artifactId>
+	<name>APIUtilities</name>
+	<url>http://maven.apache.org</url>
+	<properties><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding><cucumber.filter.tags>@aprm</cucumber.filter.tags>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+			<version>5.5.5</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.skyscreamer</groupId>
+			<artifactId>jsonassert</artifactId>
+			<version>1.5.3</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.vaadin.external.google</groupId>
+					<artifactId>android-json</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>com.jayway.jsonpath</groupId>
+			<artifactId>json-path</artifactId>
+			<version>2.9.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>json-path</artifactId>
+			<version>5.5.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>xml-path</artifactId>
+			<version>5.5.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>STAF</groupId>
+			<artifactId>GeneralUtilities</artifactId>
+			<version>${project.parent.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>STAF</groupId>
+			<artifactId>GeneralUtilities</artifactId>
+			<classifier>tests</classifier>
+			<version>${project.parent.version}</version>
+		</dependency>
+
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.4.1</version>
+            <scope>test</scope>
+        </dependency>
+
+		<dependency>
+			<groupId>de.mwvb</groupId>
+			<artifactId>xmldocument</artifactId>
+			<version>0.2.4</version>
+		</dependency>
+
+    </dependencies>
+
+</project>

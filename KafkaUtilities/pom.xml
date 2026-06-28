@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<project
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>STAF</groupId>
+        <artifactId>STAF</artifactId>
+        <version>10.3.1</version>
+    </parent>
+    <artifactId>KafkaUtilities</artifactId>
+    <name>KafkaUtilities</name>
+    <url>http://maven.apache.org</url>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+    <dependencies>
+        <!-- https://mvnrepository.com/artifact/org.apache.avro/avro -->
+        <dependency>
+            <groupId>org.apache.avro</groupId>
+            <artifactId>avro</artifactId>
+            <version>1.12.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka_2.13</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>4.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>GeneralUtilities</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>GeneralUtilities</artifactId>
+            <classifier>tests</classifier>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>ProcessBuilderUtilities</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>ProcessBuilderUtilities</artifactId>
+            <classifier>tests</classifier>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>APIUtilities</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>STAF</groupId>
+            <artifactId>APIUtilities</artifactId>
+            <classifier>tests</classifier>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+    </dependencies>
+</project>

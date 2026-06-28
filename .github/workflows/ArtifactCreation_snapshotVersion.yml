@@ -1,0 +1,88 @@
+#This workflow is used to create STAF snapshot version artifact from specified branch and upload to nexus
+
+name: Artifact Creation - snapshot version
+run-name: Artifact Creation - snapshot version
+
+on:
+  workflow_dispatch:
+
+    inputs:
+      branchName:
+        description: Please provide branch name to create artifact
+        required: true
+
+
+jobs:
+  ArtifactCreation-snapshotVersion:
+    runs-on:
+      group: cicdhub-runners
+      labels: self-hosted-standard
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: STAF runner set up
+        uses: VFDE-Solstice-TestAutomation/staf-actions/runner-setup-action@main
+        with:
+          nexus-certificate: ${{ vars.NEXUS_CERTIFICATE }}
+          servers: |
+            [{
+              "id": "STAF_repo",
+              "username": "${{ secrets.STAF_REPO_USERNAME }}",
+              "password": "${{ secrets.STAF_REPO_PASSWORD }}"
+            },
+            {
+              "id": "TESTAUTO_SOLSTICE_MAVEN2",
+              "username": "${{ secrets.NEXUS_REPO_USERNAME }}",
+              "password": "${{ secrets.NEXUS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "amdocs_repo",
+              "username": "${{ secrets.AMDOCS_REPO_USERNAME }}",
+              "password": "${{ secrets.AMDOCS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "public_repo",
+              "username": "${{ secrets.PUBLIC_REPO_USERNAME }}",
+              "password": "${{ secrets.PUBLIC_REPO_PASSWORD }}"
+            }]
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository/*/*
+            !~/.m2/repository/STAF/STAF
+          key: ${{ runner.os }}-maven-
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Create Artifact
+        run: |
+          git checkout ${{ inputs.branchName }}
+          git pull origin ${{ inputs.branchName }}
+          git status
+          mvn versions:set -DnewVersion=0.0.1-SNAPSHOT
+          mvn clean install -Dmaven.exec.skip=true -DskipTests -Dmaven.wagon.http.ssl.insecure=true -T 10
+
+      - name: Upload Artifact
+        env:
+          currentVersionNo: "0.0.1-SNAPSHOT"
+          groupId: "STAF"
+          repositoryId: "STAF_repo"
+          url: "https://vf-aws-access.deliveryzone.vodafone.com/nexus/repository/TESTAUTO2_MAVEN/"
+
+        run: |
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=STAF -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dclassifier=tests -Dfile=target/ProjectJARs/project-tests.jar -DpomFile=pom.xml
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=APIUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=APIUtilities/target/ProjectJARs/project.jar -DpomFile=APIUtilities/pom.xml -Dfiles=APIUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=DatabaseUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=DatabaseUtilities/target/ProjectJARs/project.jar -DpomFile=DatabaseUtilities/pom.xml -Dfiles=DatabaseUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=GeneralUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=GeneralUtilities/target/ProjectJARs/project.jar -DpomFile=GeneralUtilities/pom.xml -Dfiles=GeneralUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=KafkaUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=KafkaUtilities/target/ProjectJARs/project.jar -DpomFile=KafkaUtilities/pom.xml -Dfiles=KafkaUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=ProcessBuilderUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=ProcessBuilderUtilities/target/ProjectJARs/project.jar -DpomFile=ProcessBuilderUtilities/pom.xml -Dfiles=ProcessBuilderUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=TDMUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=TDMUtilities/target/ProjectJARs/project.jar -DpomFile=TDMUtilities/pom.xml -Dfiles=TDMUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=WebUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=WebUtilities/target/ProjectJARs/project.jar -DpomFile=WebUtilities/pom.xml -Dfiles=WebUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=WiremockUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=WiremockUtilities/target/ProjectJARs/project.jar -DpomFile=WiremockUtilities/pom.xml -Dfiles=WiremockUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar
+          mvn deploy:deploy-file -DgroupId=${groupId} -DartifactId=InterFrameworkUtilities -DgeneratePom=false -Dversion=${currentVersionNo} -Dmaven.wagon.http.ssl.insecure=true -Dpackaging=jar -DrepositoryId=${repositoryId} -Durl=${url} -Dfile=InterFrameworkUtilities/target/ProjectJARs/project.jar -DpomFile=InterFrameworkUtilities/pom.xml -Dfiles=InterFrameworkUtilities/target/ProjectJARs/project-tests.jar -Dclassifiers=tests -Dtypes=jar

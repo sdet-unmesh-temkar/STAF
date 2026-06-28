@@ -1,0 +1,99 @@
+name: Interframework_Ready
+on:
+  #  schedule:
+  #    - cron: '*/30 06-16 * * 1-5'
+
+  workflow_dispatch:
+
+jobs:
+
+  Get_InterFrameWork_Ready_Tests:
+    runs-on:
+      group: STAF-TEST
+
+    outputs:
+      readyTests: ${{ steps.Create_Ready_Tests_Matrix.outputs.readyTests }}
+
+    steps:
+      - name: Get READY Tests From Orchestration Service
+        id: Create_Ready_Tests_Matrix
+        uses: VFDE-Solstice-TestAutomation/staf-actions/interframework-get-test-suites-action@main
+        with:
+          suiteStatusToQuery: 'Ready'
+          orchestrationServiceUrl: ${{ vars.ORCHESTRATION_SERVICE_URL }}
+          apiUserName: ${{ secrets.ORCHESTRATION_SERVICE_API_USERNAME }}
+          apiPassword: ${{ secrets.ORCHESTRATION_SERVICE_API_PASSWORD }}
+
+  Ready_Test_Execution_Then_Service_Update_With_Current_Phase_Results:
+    needs: Get_InterFrameWork_Ready_Tests
+    if: needs.Get_InterFrameWork_Ready_Tests.outputs.readyTests != ''
+    runs-on:
+      group: STAF-TEST
+
+    strategy:
+      matrix: ${{ fromJSON(needs.Get_InterFrameWork_Ready_Tests.outputs.readyTests) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: STAF runner set up
+        uses: VFDE-Solstice-TestAutomation/staf-actions/runner-setup-action@main
+        with:
+          chrome-install: 'true'
+          nexus-certificate: ${{ vars.NEXUS_CERTIFICATE }}
+          servers: |
+            [{
+              "id": "STAF_repo",
+              "username": "${{ secrets.STAF_REPO_USERNAME }}",
+              "password": "${{ secrets.STAF_REPO_PASSWORD }}"
+            },
+            {
+              "id": "TESTAUTO_SOLSTICE_MAVEN2",
+              "username": "${{ secrets.NEXUS_REPO_USERNAME }}",
+              "password": "${{ secrets.NEXUS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "amdocs_repo",
+              "username": "${{ secrets.AMDOCS_REPO_USERNAME }}",
+              "password": "${{ secrets.AMDOCS_REPO_PASSWORD }}"
+            },
+            {
+              "id": "public_repo",
+              "username": "${{ secrets.PUBLIC_REPO_USERNAME }}",
+              "password": "${{ secrets.PUBLIC_REPO_PASSWORD }}"
+            }]
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository/*/*
+            !~/.m2/repository/STAF/$<Artifact_ID>
+          key: ${{ runner.os }}-maven-
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Test Steps
+        id: runTest
+        uses: VFDE-Solstice-TestAutomation/staf-actions/run-test-action@main
+        with:
+          testTag: ${{ matrix.cucumberTag }}
+          stage: ${{ matrix.stage }}
+          vault_RoleID: ${{ secrets.VAULT_ROLEID }}
+          vault_SecretID: ${{ secrets.VAULT_SECRETID }}
+          testSuiteRunId: ${{ matrix.testSuiteRunId }}
+          passedTestResultIndex: ${{ matrix.passedTestResultIndex }}
+          isInterframeworkContinueOrTerminateFlow: 'True'
+
+      - name: Service Update with Current Phase Test Details
+        uses: VFDE-Solstice-TestAutomation/staf-actions/interframework-service-update-action@main
+        with:
+          testSuiteRunId: ${{ matrix.testSuiteRunId }}
+          orchestrationServiceUrl: ${{ vars.ORCHESTRATION_SERVICE_URL }}
+          apiUserName: ${{ secrets.ORCHESTRATION_SERVICE_API_USERNAME }}
+          apiPassword: ${{ secrets.ORCHESTRATION_SERVICE_API_PASSWORD }}
+          interframeworkCurrentPhaseTestsResult: ${{ steps.runTest.outputs.interframeworkCurrentPhaseTestsResult }}

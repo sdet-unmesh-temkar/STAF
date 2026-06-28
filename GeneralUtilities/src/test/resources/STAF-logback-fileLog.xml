@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration scan="true">
+    <appender name="SIFT" class="ch.qos.logback.classic.sift.SiftingAppender">
+        <discriminator>
+            <key>scenarioName</key>
+            <defaultValue>LogsFile</defaultValue>
+        </discriminator>
+        <sift>
+            <appender name="FILE-${scenarioName}" class="ch.qos.logback.core.FileAppender">
+                <append>true</append>
+                <file>target/Logs/${scenarioName}.log</file>
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>STAF-%d{dd-MM-yyyy HH:mm:ss.SSS} - %thread [%-5level] %c:%L - %msg%n</pattern>
+                </layout>
+            </appender>
+        </sift>
+    </appender>
+    <!-- ConsoleAppender for error logs -->
+    <property name="LOG_LEVEL" value="${log.level:-INFO}" />
+    <appender name="ERROR-STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>ERROR</level>
+        </filter>
+        <encoder>
+            <pattern>%highlight(%d{dd-MM-yyyy HH:mm:ss.SSS} - %thread [%-5level] - (%c:%L) - %msg%n)</pattern>
+        </encoder>
+    </appender>
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="SIFT"/>
+        <appender-ref ref="ERROR-STDOUT"/>
+    </root>
+</configuration>

@@ -1,0 +1,68 @@
+name: Interframework_Done
+on:
+  #  schedule:
+  #    - cron: '*/45 06-16 * * 1-5'
+
+  workflow_dispatch:
+
+jobs:
+
+  Get_InterFrameWork_Done_Tests:
+    runs-on:
+      group: STAF-TEST
+
+    outputs:
+      doneTests: ${{ steps.Create_Done_Tests_Matrix.outputs.doneTests }}
+
+    steps:
+      - name: Get DONE Tests From Orchestration Service
+        id: Create_Done_Tests_Matrix
+        uses: VFDE-Solstice-TestAutomation/staf-actions/interframework-get-test-suites-action@main
+        with:
+          suiteStatusToQuery: 'Done'
+          orchestrationServiceUrl: ${{ vars.ORCHESTRATION_SERVICE_URL }}
+          apiUserName: ${{ secrets.ORCHESTRATION_SERVICE_API_USERNAME }}
+          apiPassword: ${{ secrets.ORCHESTRATION_SERVICE_API_PASSWORD }}
+
+  Upload_InterFramework_Done_Tests_To_Jira:
+    needs: Get_InterFrameWork_Done_Tests
+    if: needs.Get_InterFrameWork_Done_Tests.outputs.doneTests != ''
+    runs-on:
+      group: STAF-TEST
+
+    strategy:
+      matrix: ${{ fromJSON(needs.Get_InterFrameWork_Done_Tests.outputs.doneTests) }}
+      fail-fast: false
+
+    steps:
+      - name: Prepare JSON from History API
+        uses: VFDE-Solstice-TestAutomation/staf-actions/interframework-prepare-test-results-json-action@main
+        with:
+          testSuiteRunId: ${{matrix.testSuiteRunId}}
+          orchestrationServiceUrl: ${{ vars.ORCHESTRATION_SERVICE_URL }}
+          apiUserName: ${{ secrets.ORCHESTRATION_SERVICE_API_USERNAME }}
+          apiPassword: ${{ secrets.ORCHESTRATION_SERVICE_API_PASSWORD }}
+
+      - name: "Import results to Xray"
+        id: importResult
+        uses: VFDE-Solstice-TestAutomation/staf-actions/import-results-xray-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.STAF_JIRA_USERNAME }}
+          password: ${{ secrets.STAF_JIRA_PASSWORD }}
+          projectKey: ${{ matrix.projectKey }}
+          stage: ${{ matrix.stage }}
+          testSuiteRunId: ${{ matrix.testSuiteRunId }}
+          testPlan: ${{ matrix.testPlan }}
+          assignedToTeam: 'ATL-131635'
+          xrayTestExecutionName: 'Interframework Test Results of Suite ID : ${{ matrix.testSuiteRunId }}'
+
+      - name: Test Suite Status Update After Xray Upload
+        if: ${{steps.importResult.outputs.testExecKey}} != ''
+        uses: VFDE-Solstice-TestAutomation/staf-actions/interframework-service-update-action@main
+        with:
+          testSuiteRunId: ${{ matrix.testSuiteRunId }}
+          orchestrationServiceUrl: ${{ vars.ORCHESTRATION_SERVICE_URL }}
+          apiUserName: ${{ secrets.ORCHESTRATION_SERVICE_API_USERNAME }}
+          apiPassword: ${{ secrets.ORCHESTRATION_SERVICE_API_PASSWORD }}
+          isStatusUpdateAfterXrayUploaded: 'True'
